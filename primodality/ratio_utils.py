@@ -23,6 +23,7 @@ class Ratio:
     def __eq__(self, other: 'Ratio') -> bool:
         return self.numerator == other.numerator and self.denominator == other.denominator
 
+
 def simplify_octave(ratio: Ratio) -> Ratio:
     """Remove octaves from ratio (all powers of 2)
     ex: 6/2 -> 3/1
