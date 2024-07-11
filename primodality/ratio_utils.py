@@ -12,7 +12,7 @@ class Ratio:
         return numerator // gcd, denominator // gcd
 
     def __repr__(self):
-        return f"Ratio({self.numerator}/{self.denominator})"
+        return f"{self.numerator}/{self.denominator}"
 
     def __mul__(self, other: 'Ratio') -> 'Ratio':
         return Ratio(self.numerator * other.numerator, self.denominator * other.denominator)
@@ -22,6 +22,12 @@ class Ratio:
 
     def __eq__(self, other: 'Ratio') -> bool:
         return self.numerator == other.numerator and self.denominator == other.denominator
+
+    def __hash__(self) -> int:
+        return hash((self.numerator, self.denominator))
+
+    def __gt__(self, other) -> bool:
+        return self.numerator / self.denominator > other.numerator / other.denominator
 
 
 def simplify_octave(ratio: Ratio) -> Ratio:
@@ -48,7 +54,7 @@ def octave_reduce(ratio: Ratio) -> Ratio:
     return Ratio(num, den)
 
 
-def get_mode(mode: int, over: bool = True) -> List[Ratio]:
+def get_mode_ratios(mode: int, over: bool = True) -> List[Ratio]:
     """Generate a mode based on the given parameters."""
     if over:
         return [Ratio(mode + i, mode) for i in range(mode)]

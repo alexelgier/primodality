@@ -42,8 +42,7 @@ def analyze_chords(chords: List[Chord]) -> List[Tuple[Chord, Dict[str, float]]]:
     return sorted(analyzed_chords, key=lambda x: (x[1]['tenney_height'], x[1]['wilson_height']))
 
 
-def get_best_chords(analyzed_chords: List[Tuple[Chord, Dict[str, float]]], n: int = 10) -> List[
-    Tuple[Chord, Dict[str, float]]]:
+def get_best_chords(analyzed_chords: List[Tuple[Chord, Dict[str, float]]], n: int = 10) -> List[Tuple[Chord, Dict[str, float]]]:
     return analyzed_chords[:n]
 
 
