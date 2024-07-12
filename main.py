@@ -1,54 +1,70 @@
 from itertools import combinations, product
 from typing import Tuple, Dict, Set
-from primodality.ratio_utils import Ratio, get_mode_ratios, octave_reduce
+
+from primodality.pitch_class import PitchClass
+from primodality.ratio_utils import Ratio, get_mode_ratios
 from primodality.harmonicity_measures import tenney_height
 from primodality.mode import Mode
 import random
 
 
-def compute_pitch_classes(branches: Set[int], modes: Set[int]) -> Tuple[Dict[Ratio, Set[Mode]], Dict[Mode, Set[Ratio]]]:
-    pitch_classes = {}
-    modes_dict = {}
+def make_pitch_classes_and_modes(branches: Set[int], modes: Set[int]) -> Tuple[Set[PitchClass], Set[Mode]]:
+    pcs_dict, modes_dict = {}, {}
+    pcs_set, modes_set = set(), set()
     for branch, mode in product(branches, modes):
         for over in [True, False]:
-            cur_mode = Mode(branch, mode, over)
-            for pc in get_mode_ratios(mode, over):
-                pc = octave_reduce(Ratio(pc.numerator * branch, pc.denominator))
-                if pc not in pitch_classes:
-                    pitch_classes[pc] = set()
-                pitch_classes[pc].add(cur_mode)
-                cur_mode.pitch_classes.add(pc)
-            modes_dict[cur_mode] = cur_mode.pitch_classes
-    return pitch_classes, modes_dict
+            cur_mode = (branch, mode, over)
+            for note in get_mode_ratios(mode, over):
+                pc = PitchClass.octave_reduce(note.numerator * branch, note.denominator)
+                if pc not in pcs_dict:
+                    pcs_dict[pc] = set()
+                pcs_dict[pc].add(cur_mode)
+                if cur_mode not in modes_dict:
+                    modes_dict[cur_mode] = set()
+                modes_dict[cur_mode].add(pc)
+    for pc in pcs_dict:
+        new_pc = PitchClass(*pc)
+        new_pc.modes.update({Mode(*x) for x in pcs_dict[pc]})
+        pcs_set.add(new_pc)
+    for mode in modes_dict:
+        new_mode = Mode(*mode)
+        new_mode.pitch_classes.update({PitchClass(*x) for x in modes_dict[mode]})
+        modes_set.add(new_mode)
+    return pcs_set, modes_set
 
 
-def compute_mode_distances(modes_dict: Dict[Mode, Set[Ratio]]):
+def compute_mode_distances(modes: Set[Mode]):
     modes_distance: dict[frozenset[Mode], tuple[float, int, float]] = {}
-    for mode_pair in combinations(modes_dict.keys(), 2):
+    for mode_pair in combinations(modes, 2):
         pair = frozenset(mode_pair)
-        common = len(set(modes_dict[mode_pair[0]]).intersection(set(modes_dict[mode_pair[1]])))
+        common = len(mode_pair[0].pitch_classes.intersection(mode_pair[1].pitch_classes))
         if common > 1:
-            intervals = [tenney_height(max(x, y) / min(x, y)) for x in modes_dict[mode_pair[0]] for y in
-                         modes_dict[mode_pair[1]]]
+            intervals = [tenney_height(max(x, y) / min(x, y)) for x in mode_pair[0].pitch_classes for y in
+                         mode_pair[1].pitch_classes]
             th = sum(intervals) / len(intervals)
-            common_weighted = common / min(len(modes_dict[mode_pair[0]]), len(modes_dict[mode_pair[1]]))
+            common_weighted = common / min(len(mode_pair[0].pitch_classes), len(mode_pair[1].pitch_classes))
             modes_distance[pair] = (-common_weighted, -common, th)
     return modes_distance
 
 
-def main():
-    branches = {1, 7}
-    modes = {5, 6, 7, 8, 9}
-    print(f"branches {branches}")
-    print(f"modes {modes}\n")
+BRANCHES = {1, 3, 5, 7}
+MODES = {5, 6, 7, 8, 9}
 
-    print("Computing pitch classes...")
-    pitch_classes, modes_dict = compute_pitch_classes(branches, modes)
-    print(f"{len(pitch_classes)} pitch classes")
-    print(f"{len(modes_dict)} modes\n")
+
+def main():
+    print(f"branches {BRANCHES}")
+    print(f"modes {MODES}")
+    print(" ")
+
+    print("Computing pitch classes and modes...")
+    pcs, modes = make_pitch_classes_and_modes(BRANCHES, MODES)
+
+    print(f"{len(pcs)} pitch classes")
+    print(f"{len(modes)} modes")
+    print(" ")
 
     print("Computing mode distances...")
-    modes_distance = compute_mode_distances(modes_dict)
+    modes_distance = compute_mode_distances(modes)
 
     print("Top 10 mode relations:")
     for m in sorted(list(modes_distance.keys()), key=lambda x: modes_distance[x])[:10]:
@@ -56,29 +72,26 @@ def main():
 
     print(" ")
     print("Pitch Classes:")
-    for pc in sorted(pitch_classes.keys()):
-        print(pc, pitch_classes[pc])
+    for pc in sorted(pcs):
+        print(pc)
     print(" ")
     print("Modes:")
-    for mode in modes_dict:
-        print(mode, modes_dict[mode])
+    for mode in modes:
+        print(mode, modes)
     print(" ")
 
-    chosen_pc = random.choice(list(pitch_classes.keys()))
-    print("Chosen pc:", chosen_pc)
-    print("Modes:", pitch_classes[chosen_pc])
-    chosen_mode = random.choice(list(pitch_classes[chosen_pc]))
-    print(" ")
-    print("Chosen mode:")
-    print("branch", chosen_mode.branch, "- mode", chosen_mode.mode, "- overtone" if chosen_mode.over else "- undertone")
-    chosen_mode_pcs = modes_dict[chosen_mode]
+    chosen_pc = random.choice(list(pcs))
+    print("Chosen PC:", chosen_pc)
+    chosen_mode = random.choice(list(chosen_pc.modes))
+    print("Chosen Mode:", chosen_mode)
+    chosen_mode_pcs = chosen_mode.pitch_classes
     print(sorted(list(chosen_mode_pcs)))
     print(" ")
     print(" ")
 
     # find ranking of nearest modes
     related_modes = []
-    for mode in modes_dict:
+    for mode in modes:
         if mode != chosen_mode:
             pair = frozenset((mode, chosen_mode))
             if pair in modes_distance:

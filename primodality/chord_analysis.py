@@ -1,5 +1,5 @@
 from typing import List, Tuple, Dict
-from primodality.ratio_utils import Ratio, octave_reduce
+from primodality.ratio_utils import Ratio
 from primodality.harmonicity_measures import tenney_height, wilson_height
 
 
@@ -13,7 +13,7 @@ class Chord:
         for i in range(len(self.ratios)):
             for j in range(i + 1, len(self.ratios)):
                 interval = self.ratios[j] / self.ratios[i]
-                intervals.append(octave_reduce(interval))
+                intervals.append(Ratio.octave_reduce(*interval))
         return intervals
 
     def get_tenney_height(self) -> float:

@@ -1,5 +1,5 @@
 import unittest
-from primodality.ratio_utils import Ratio, simplify_octave, octave_reduce, get_mode_ratios
+from primodality.ratio_utils import Ratio, get_mode_ratios
 
 
 class TestRatio(unittest.TestCase):
@@ -27,15 +27,10 @@ class TestRatio(unittest.TestCase):
 
 
 class TestRatioUtils(unittest.TestCase):
-    def test_simplify_octave(self):
-        r = Ratio(16, 12)
-        result = simplify_octave(r)
-        self.assertEqual((result.numerator, result.denominator), (1, 3))
 
     def test_octave_reduce(self):
-        r = Ratio(9, 4)
-        result = octave_reduce(r)
-        self.assertEqual((result.numerator, result.denominator), (9, 8))
+        result = Ratio.octave_reduce(9,4)
+        self.assertEqual(result, (9, 8))
 
     def test_get_mode_over(self):
         mode = get_mode_ratios(5, over=True)

@@ -8,8 +8,22 @@ class Ratio:
 
     @staticmethod
     def simplify(numerator: int, denominator: int) -> Tuple[int, int]:
+        """Simplify ratio"""
         gcd = math.gcd(numerator, denominator)
         return numerator // gcd, denominator // gcd
+
+    @staticmethod
+    def octave_reduce(numerator: int, denominator: int) -> Tuple[int, int]:
+        """Reduce ratio to first octave (1-2)."""
+        while numerator % 2 == 0:
+            numerator //= 2
+        while denominator % 2 == 0:
+            denominator //= 2
+        while numerator < denominator:
+            numerator *= 2
+        while denominator * 2 < numerator:
+            denominator *= 2
+        return Ratio.simplify(numerator, denominator)
 
     def __repr__(self):
         return f"{self.numerator}/{self.denominator}"
@@ -28,30 +42,6 @@ class Ratio:
 
     def __gt__(self, other) -> bool:
         return self.numerator / self.denominator > other.numerator / other.denominator
-
-
-def simplify_octave(ratio: Ratio) -> Ratio:
-    """Remove octaves from ratio (all powers of 2)
-    ex: 6/2 -> 3/1
-        18/4 -> 9/1
-        8/7 -> 1/7"""
-    num, den = ratio.numerator, ratio.denominator
-    while num % 2 == 0:
-        num //= 2
-    while den % 2 == 0:
-        den //= 2
-    return Ratio(num, den)
-
-
-def octave_reduce(ratio: Ratio) -> Ratio:
-    """Reduce ratio to first octave (1-2)."""
-    ratio = simplify_octave(ratio)
-    num, den = ratio.numerator, ratio.denominator
-    while num < den:
-        num *= 2
-    while den * 2 < num:
-        den *= 2
-    return Ratio(num, den)
 
 
 def get_mode_ratios(mode: int, over: bool = True) -> List[Ratio]:
